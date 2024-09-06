@@ -92,7 +92,8 @@ class ClothesMenu:
             self.items[self.current_item].is_bought = True
 
     def use_item(self):
-        self.items[self.current_item].is_using = not self.items[self.current_item].is_using
+        if self.items[self.current_item].is_bought:
+            self.items[self.current_item].is_using = not self.items[self.current_item].is_using
 
     def draw(self, screen):
         screen.blit(self.menu_page, (0, 0))

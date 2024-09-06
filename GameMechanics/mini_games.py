@@ -15,14 +15,14 @@ class MiniGame:
         self.toys = pg.sprite.Group()
         self.score = 0
         self.start_time = pg.time.get_ticks()
-        self.interval = 5000
+        self.interval = 30000
 
     def new_game(self):
         self.dog = Dog()
         self.toys = pg.sprite.Group()
         self.score = 0
         self.start_time = pg.time.get_ticks()
-        self.interval = 5000
+        self.interval = 30000
 
     def update(self):
         if random.randint(0, 100) == 0:
