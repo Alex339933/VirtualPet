@@ -5,7 +5,7 @@ from Utilits.tools import load_image, text_render
 
 
 class ClothesMenu:
-    def __init__(self, game):
+    def __init__(self, game, data):
         self.game = game
         self.menu_page = load_image("images/menu/menu_page.png", SCREEN_WIDTH, SCREEN_HEIGHT)
 
@@ -17,6 +17,8 @@ class ClothesMenu:
         self.items = [Item("Синяя футболка", 10, "images/items/blue t-shirt.png"),
                       Item("Ботинки", 50, "images/items/boots.png"),
                       Item("Шляпа", 50, "images/items/hat.png")]
+        for item in data:
+            self.items.append(Item(*item.values()))
 
         self.current_item = 0
 

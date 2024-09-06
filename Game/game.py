@@ -1,19 +1,27 @@
 import random
-from Cofigs.config import BUTTON_HEIGHT, BUTTON_WIDTH, DECREASE, DOG_HEIGHT, DOG_WIDTH, DOG_Y, FPS, ICON_SIZE, INCREASE_OF_COINS, PADDING, SCREEN_HEIGHT, SCREEN_WIDTH
+import json
+from Cofigs.config import BUTTON_HEIGHT, BUTTON_WIDTH, DECREASE, DOG_HEIGHT, DOG_WIDTH, DOG_Y, FPS, ICON_SIZE, \
+    INCREASE_OF_COINS, PADDING, SCREEN_HEIGHT, SCREEN_WIDTH
 from GameMechanics.mini_games import MiniGame
+from UI import clothes_menu
 from UI.button import Button
 from UI.clothes_menu import ClothesMenu
 from UI.food_menu import FoodMenu
-from Utilits.tools import load_image, text_render
+from Utilits.tools import load_image, text_render, font_maxi
 import pygame as pg
+
 
 class Game:
     def __init__(self):
         pg.init()
-       
+
         mini_font = pg.font.Font(None, 15)
         pg.time.set_timer(INCREASE_OF_COINS, 2000)
         pg.time.set_timer(DECREASE, 1000)
+
+        with open("Game/save.json", "r", encoding="UTF-8") as f:
+            data = json.load(f)
+
         # Загрузка иконок
         self.health_image = load_image("images/health.png", ICON_SIZE, ICON_SIZE)
         self.happiness_image = load_image("images/happiness.png", ICON_SIZE, ICON_SIZE)
@@ -21,7 +29,7 @@ class Game:
         self.money_image = load_image("images/money.png", ICON_SIZE, ICON_SIZE)
         self.dog_image = load_image("images/dog.png", DOG_WIDTH, DOG_HEIGHT)
         self.background = load_image("images/background.png", SCREEN_WIDTH, SCREEN_HEIGHT)
-        self.money = 0
+        self.money = data["money"]
         self.clock = pg.time.Clock()
 
         button_x = SCREEN_WIDTH - BUTTON_WIDTH - PADDING
@@ -34,19 +42,21 @@ class Game:
 
         self.buttons = [self.eat_button, self.games_button, self.cloth_button, self.upgrade_button]
 
-        self.coins_per_second = 1
-        self.costs_of_upgrade = {100: False, 1000: False, 5000: False, 10000: False}
+        self.coins_per_second = data["coins_per_second"]
+        self.costs_of_upgrade = {}
+        for key, value in data["costs_of_upgrade"].items():
+            self.costs_of_upgrade[int(key)] = value
         self.mode = "Main"
 
         # Создание окна
         self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pg.display.set_caption("Виртуальный питомец")
 
-        self.health = 100
-        self.happiness = 100
-        self.satiety = 100
+        self.health = data["health"]
+        self.happiness = data["happiness"]
+        self.satiety = data["satiety"]
 
-        self.clothes_menu = ClothesMenu(self)
+        self.clothes_menu = ClothesMenu(self, data["clothes"])
         self.food_menu = FoodMenu(self)
         self.mini_game = MiniGame(self)
         self.run()
@@ -60,7 +70,6 @@ class Game:
 
     def food_menu_on(self):
         self.mode = "Food menu"
-
 
     def run(self):
         while True:
@@ -80,6 +89,73 @@ class Game:
     def event(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
+                if self.mode == "Game over":
+                    data = {
+                        "happiness": 100,
+                        "satiety": 100,
+                        "health": 100,
+                        "money": 10,
+                        "coins_per_second": 1,
+                        "costs_of_upgrade": {
+                            "100": False,
+                            "500": False,
+                            "1000": False,
+                            "5000": False,
+                            "10000": False
+                        },
+                        "clothes": [{
+                            "name": "Синяя футболка",
+                            "price": 10,
+                            "image": "images/items/blue t-shirt.png",
+                            "is_using": False,
+                            "is_bought": False
+
+                        },
+
+                            {
+
+                                "name": "Ботинки",
+                                "price": 50,
+                                "image": "images/items/boots.png",
+                                "is_using": False,
+                                "is_bought": False
+                            },
+                            {
+                                "name": "Шляпа",
+                                "price": 50,
+                                "image": "images/items/hat.png",
+                                "is_using": False,
+                                "is_bought": False,
+                            }
+                        ]
+                    }
+                else:
+                    data = {
+                        "happiness": self.happiness,
+                        "satiety": self.satiety,
+                        "health": self.health,
+                        "money": self.money,
+                        "coins_per_second": self.coins_per_second,
+                        "costs_of_upgrade": {
+                            "100": self.costs_of_upgrade[100],
+                            "500": self.costs_of_upgrade[500],
+                            "1000": self.costs_of_upgrade[1000],
+                            "5000": self.costs_of_upgrade[5000],
+                            "10000": self.costs_of_upgrade[10000]
+                        },
+                        "clothes": []
+                    }
+                    for item in self.clothes_menu.items:
+                        data["clothes"].append({
+                            "name": item.name,
+                            "price": item.price,
+                            "file": item.file,
+                            "is_put_on": item.is_using,
+                            "is_bought": item.is_bought
+                        }
+                        )
+                with open("Game/save.json", "w", encoding="UTF-8") as f:
+                    json.dump(data, f, ensure_ascii=False)
                 pg.quit()
                 exit()
             if event.type == pg.KEYDOWN:
@@ -110,17 +186,19 @@ class Game:
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 self.money += 1
 
-
     def update(self):
         if self.mode == "Main":
             for button in self.buttons:
                 button.update()
-        if self.mode == "Clothes menu":
+        elif self.mode == "Clothes menu":
             self.clothes_menu.update()
-        if self.mode == "Food menu":
+        elif self.mode == "Food menu":
             self.food_menu.update()
-        if self.mode == "Mini game":
+        elif self.mode == "Mini game":
             self.mini_game.update()
+
+        if self.satiety <= 0 or self.happiness <= 0 or self.health <= 0:
+            self.mode = "Game over"
 
     def draw(self):
         # Отрисовка иконок
@@ -149,10 +227,15 @@ class Game:
         if self.mode == "Clothes menu":
             self.clothes_menu.draw(self.screen)
 
-        if self.mode == "Food menu":
+        elif self.mode == "Food menu":
             self.food_menu.draw(self.screen)
 
-        if self.mode == "Mini game":
+        elif self.mode == "Mini game":
             self.mini_game.draw(self.screen)
+
+        elif self.mode == "Game over":
+            text = font_maxi.render("ПРОИГРЫШ", True, "red")
+            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+            self.screen.blit(text, text_rect)
 
         pg.display.flip()

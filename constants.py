@@ -1,6 +1,4 @@
-import os
 import pygame as pg
-
 
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 550

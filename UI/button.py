@@ -1,4 +1,3 @@
-
 import pygame as pg
 from Cofigs.config import BUTTON_HEIGHT, BUTTON_WIDTH
 from Utilits.tools import load_image, text_render
